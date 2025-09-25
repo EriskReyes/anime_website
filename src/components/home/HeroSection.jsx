@@ -13,7 +13,7 @@ export default function HeroSection({ featuredArticle }) {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: featuredArticle.image_url ? `url(${featuredArticle.image_url})` : `url(https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1920&h=1080&fit=crop)`,
+          backgroundImage: featuredArticle.image_url ? `url(${featuredArticle.image_url})` : `url(https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=1920&h=1080&fit=crop)`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent"></div>

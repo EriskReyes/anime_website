@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
-import { ForumPost } from "@/api/entities";
-import { User } from "@/api/entities";
+import { ForumPostModel } from "../models/ForumPostModel.js";
+import { UserModel } from "../models/UserModel.js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, Plus, Heart, Clock, User as UserIcon } from "lucide-react";
 import { motion } from "framer-motion";
-import { format } from "date-fns"; // Fix: Changed '=' to 'from'
+import { format } from "date-fns";
 import { de } from "date-fns/locale";
 
 export default function Forum() {
@@ -24,13 +24,13 @@ export default function Forum() {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = () => {
     setIsLoading(true);
     try {
-      const [forumPosts, user] = await Promise.all([
-        ForumPost.list("-created_date"),
-        User.me()
-      ]);
+      const forumPosts = ForumPostModel.findAll();
+      const users = UserModel.findAll();
+      const user = users.find(u => u.username === 'otaku_master') || users[0];
+
       setPosts(forumPosts);
       setCurrentUser(user);
     } catch (error) {
@@ -39,30 +39,41 @@ export default function Forum() {
     setIsLoading(false);
   };
 
-  const handleCreatePost = async (e) => {
+  const handleCreatePost = (e) => {
     e.preventDefault();
     if (!newPost.title.trim() || !newPost.content.trim()) return;
 
-    await ForumPost.create(newPost);
-    setNewPost({ title: "", content: "", category: "general" });
-    setShowNewPost(false);
-    loadData();
+    try {
+      const post = new ForumPostModel({
+        title: newPost.title,
+        content: newPost.content,
+        category: newPost.category,
+        authorId: currentUser?.id || 'anonymous'
+      });
+
+      post.save();
+      setNewPost({ title: "", content: "", category: "general" });
+      setShowNewPost(false);
+      loadData();
+    } catch (error) {
+      console.error('Fehler beim Erstellen des Beitrags:', error);
+    }
   };
 
   const categoryColors = {
-    anime: "bg-pink-500/20 text-pink-400 border-pink-500/30",
-    games: "bg-blue-500/20 text-blue-400 border-blue-500/30", 
-    general: "bg-purple-500/20 text-purple-400 border-purple-500/30",
-    news: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-    reviews: "bg-green-500/20 text-green-400 border-green-500/30"
+    "anime-discussion": "bg-pink-500/20 text-pink-400 border-pink-500/30",
+    "games": "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    "general": "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    "recommendations": "bg-orange-500/20 text-orange-400 border-orange-500/30",
+    "help": "bg-green-500/20 text-green-400 border-green-500/30"
   };
   
   const categoryTranslations = {
-    anime: "Anime",
-    games: "Spiele", 
-    general: "Allgemein",
-    news: "News",
-    reviews: "Reviews"
+    "anime-discussion": "Anime",
+    "games": "Spiele",
+    "general": "Allgemein",
+    "recommendations": "Empfehlungen",
+    "help": "Hilfe"
   };
 
   const filterPostsByCategory = (category) => {
@@ -137,10 +148,10 @@ export default function Forum() {
                     className="w-full p-3 bg-white/10 border border-white/20 rounded-lg text-white"
                   >
                     <option value="general">Allgemein</option>
-                    <option value="anime">Anime</option>
+                    <option value="anime-discussion">Anime Diskussion</option>
                     <option value="games">Spiele</option>
-                    <option value="news">Nachrichten</option>
-                    <option value="reviews">Bewertungen</option>
+                    <option value="recommendations">Empfehlungen</option>
+                    <option value="help">Hilfe</option>
                   </select>
 
                   <Textarea
@@ -173,21 +184,21 @@ export default function Forum() {
             <TabsTrigger value="general" className="data-[state=active]:bg-purple-600 text-white text-sm">
               Allgemein
             </TabsTrigger>
-            <TabsTrigger value="anime" className="data-[state=active]:bg-pink-600 text-white text-sm">
+            <TabsTrigger value="anime-discussion" className="data-[state=active]:bg-pink-600 text-white text-sm">
               Anime
             </TabsTrigger>
             <TabsTrigger value="games" className="data-[state=active]:bg-blue-600 text-white text-sm">
               Spiele
             </TabsTrigger>
-            <TabsTrigger value="news" className="data-[state=active]:bg-orange-600 text-white text-sm">
-              News
+            <TabsTrigger value="recommendations" className="data-[state=active]:bg-orange-600 text-white text-sm">
+              Empfehlungen
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="data-[state=active]:bg-green-600 text-white text-sm">
-              Reviews
+            <TabsTrigger value="help" className="data-[state=active]:bg-green-600 text-white text-sm">
+              Hilfe
             </TabsTrigger>
           </TabsList>
 
-          {["all", "general", "anime", "games", "news", "reviews"].map((category) => (
+          {["all", "general", "anime-discussion", "games", "recommendations", "help"].map((category) => (
             <TabsContent key={category} value={category}>
               <div className="space-y-4">
                 {filterPostsByCategory(category).map((post, index) => (
@@ -207,9 +218,9 @@ export default function Forum() {
                               </Badge>
                               <div className="flex items-center gap-2 text-white/60 text-sm">
                                 <UserIcon className="w-4 h-4" />
-                                <span>{post.created_by}</span>
+                                <span>Benutzer</span>
                                 <Clock className="w-4 h-4" />
-                                <span>{format(new Date(post.created_date), "dd. MMM yyyy", { locale: de })}</span>
+                                <span>{format(new Date(post.createdAt), "dd. MMM yyyy", { locale: de })}</span>
                               </div>
                             </div>
                             <h3 className="text-xl font-bold text-white mb-3">{post.title}</h3>

@@ -10,20 +10,24 @@ import Games from "./Games";
 
 import Trending from "./Trending";
 
+import Database from "./Database";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
-    
+
     Home: Home,
-    
+
     Forum: Forum,
-    
+
     Anime: Anime,
-    
+
     Games: Games,
-    
+
     Trending: Trending,
-    
+
+    Database: Database,
+
 }
 
 function _getCurrentPage(url) {
@@ -60,7 +64,9 @@ function PagesContent() {
                 <Route path="/Games" element={<Games />} />
                 
                 <Route path="/Trending" element={<Trending />} />
-                
+
+                <Route path="/Database" element={<Database />} />
+
             </Routes>
         </Layout>
     );

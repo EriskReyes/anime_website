@@ -21,10 +21,7 @@ export default function ArticleCard({ article, index }) {
         {/* Bild */}
         <div className="relative aspect-video overflow-hidden">
           <img
-            src={article.image_url || (isAnime ? 
-              "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=225&fit=crop" : 
-              "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=225&fit=crop"
-            )}
+            src={article.image_url || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=225&fit=crop"}
             alt={article.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />

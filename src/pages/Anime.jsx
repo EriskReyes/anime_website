@@ -1,55 +1,61 @@
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Article } from "@/api/entities";
-import ArticleCard from "../components/home/ArticleCard";
+import { AnimeModel } from "../models/AnimeModel.js";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Search, Filter, Star } from "lucide-react";
+import { Play, Search, Filter, Star, Calendar, Clock, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Anime() {
-  const [articles, setArticles] = useState([]);
-  const [filteredArticles, setFilteredArticles] = useState([]);
+  const [animes, setAnimes] = useState([]);
+  const [filteredAnimes, setFilteredAnimes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadArticles = useCallback(async () => {
+  const loadAnimes = useCallback(() => {
     setIsLoading(true);
-    const data = await Article.filter({ type: "anime" }, "-created_date");
-    setArticles(data);
+    try {
+      const data = AnimeModel.findAll();
+      setAnimes(data);
+    } catch (error) {
+      console.error('Error loading animes:', error);
+      setAnimes([]);
+    }
     setIsLoading(false);
   }, []);
 
-  const filterArticles = useCallback(() => {
-    let filtered = [...articles];
+  const filterAnimes = useCallback(() => {
+    let filtered = [...animes];
 
-    // Suchfilter
+    // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(article => 
-        article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(anime =>
+        anime.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        anime.synopsis.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        anime.studio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        anime.alternativeTitles?.some(title => title.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
-    // Genre-Filter
+    // Genre filter
     if (selectedGenre !== "all") {
-      filtered = filtered.filter(article => 
-        article.genre && article.genre.includes(selectedGenre)
+      filtered = filtered.filter(anime =>
+        anime.genres && anime.genres.includes(selectedGenre)
       );
     }
 
-    // Status-Filter
+    // Status filter
     if (selectedStatus !== "all") {
-      filtered = filtered.filter(article => article.status === selectedStatus);
+      filtered = filtered.filter(anime => anime.status === selectedStatus);
     }
 
-    // Sortierung
+    // Sorting
     switch (sortBy) {
       case "rating":
         filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
@@ -58,24 +64,30 @@ export default function Anime() {
         filtered.sort((a, b) => a.title.localeCompare(b.title));
         break;
       case "release_date":
-        filtered.sort((a, b) => new Date(b.release_date || 0) - new Date(a.release_date || 0));
+        filtered.sort((a, b) => new Date(b.releaseDate || 0) - new Date(a.releaseDate || 0));
         break;
-      default: // Neueste
-        filtered.sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+      case "episodes":
+        filtered.sort((a, b) => (b.episodes || 0) - (a.episodes || 0));
+        break;
+      case "popularity":
+        filtered.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        break;
+      default: // Recent (by created date)
+        filtered.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     }
 
-    setFilteredArticles(filtered);
-  }, [articles, searchTerm, selectedGenre, selectedStatus, sortBy]);
+    setFilteredAnimes(filtered);
+  }, [animes, searchTerm, selectedGenre, selectedStatus, sortBy]);
 
   useEffect(() => {
-    loadArticles();
-  }, [loadArticles]); // Abhängig von loadArticles, das jetzt memoisiert ist
+    loadAnimes();
+  }, [loadAnimes]);
 
   useEffect(() => {
-    filterArticles();
-  }, [filterArticles]); // Abhängig von filterArticles, das jetzt memoisiert ist
+    filterAnimes();
+  }, [filterAnimes]);
 
-  const allGenres = [...new Set(articles.flatMap(article => article.genre || []))];
+  const allGenres = [...new Set(animes.flatMap(anime => anime.genres || []))];
 
   if (isLoading) {
     return (
@@ -152,9 +164,9 @@ export default function Anime() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Alle Status</SelectItem>
-                <SelectItem value="released">Veröffentlicht</SelectItem>
+                <SelectItem value="completed">Abgeschlossen</SelectItem>
+                <SelectItem value="ongoing">Laufend</SelectItem>
                 <SelectItem value="upcoming">Demnächst</SelectItem>
-                <SelectItem value="announced">Angekündigt</SelectItem>
               </SelectContent>
             </Select>
 
@@ -166,8 +178,10 @@ export default function Anime() {
               <SelectContent>
                 <SelectItem value="recent">Neueste</SelectItem>
                 <SelectItem value="rating">Beste Bewertung</SelectItem>
+                <SelectItem value="popularity">Beliebtheit</SelectItem>
                 <SelectItem value="title">Titel A-Z</SelectItem>
                 <SelectItem value="release_date">Veröffentlichungsdatum</SelectItem>
+                <SelectItem value="episodes">Episodenzahl</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -195,25 +209,120 @@ export default function Anime() {
         {/* Ergebniszählung */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-white/60">
-            Zeige {filteredArticles.length} von {articles.length} Animes
+            Zeige {filteredAnimes.length} von {animes.length} Animes
           </p>
-          
+
           <div className="flex items-center gap-2">
             <Star className="w-4 h-4 text-yellow-400" />
             <span className="text-white/80 text-sm">
-              Durchschnitt: {articles.length > 0 ? 
-                (articles.reduce((sum, article) => sum + (article.rating || 0), 0) / articles.length).toFixed(1) : 
+              Durchschnitt: {animes.length > 0 ?
+                (animes.reduce((sum, anime) => sum + (anime.rating || 0), 0) / animes.length).toFixed(1) :
                 "0.0"
               }
             </span>
           </div>
         </div>
 
-        {/* Artikel-Grid */}
-        {filteredArticles.length > 0 ? (
+        {/* Anime Grid */}
+        {filteredAnimes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredArticles.map((article, index) => (
-              <ArticleCard key={article.id} article={article} index={index} />
+            {filteredAnimes.map((anime, index) => (
+              <motion.div
+                key={anime.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="group bg-white/5 backdrop-blur-lg border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                  <div className="relative overflow-hidden rounded-t-lg">
+                    <div className="aspect-[3/4] overflow-hidden">
+                      <img
+                        src={anime.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=600&fit=crop"}
+                        alt={anime.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="absolute top-2 left-2 flex gap-1">
+                      <Badge variant="secondary" className="bg-black/60 text-white text-xs">
+                        {anime.type || 'Anime'}
+                      </Badge>
+                      {anime.status === 'ongoing' && (
+                        <Badge variant="default" className="bg-green-500 text-white text-xs">
+                          Laufend
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/60 rounded px-2 py-1">
+                      <Star className="w-3 h-3 text-yellow-400" />
+                      <span className="text-white text-xs">{anime.rating || 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white text-lg leading-tight line-clamp-2">
+                      {anime.title}
+                    </CardTitle>
+                    <CardDescription className="text-white/60 text-sm line-clamp-2">
+                      {anime.synopsis}
+                    </CardDescription>
+                  </CardHeader>
+
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
+                      {/* Genres */}
+                      <div className="flex flex-wrap gap-1">
+                        {anime.genres?.slice(0, 3).map((genre) => (
+                          <Badge key={genre} variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-500/30">
+                            {genre}
+                          </Badge>
+                        ))}
+                        {anime.genres?.length > 3 && (
+                          <Badge variant="outline" className="text-xs bg-gray-500/20 text-gray-300 border-gray-500/30">
+                            +{anime.genres.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex items-center justify-between text-xs text-white/60">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-3 h-3" />
+                          <span>{anime.rating || 0}/10</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{anime.releaseDate ? new Date(anime.releaseDate).getFullYear() : 'TBA'}</span>
+                        </div>
+                      </div>
+
+                      {/* Developer/Studio */}
+                      {anime.studio && (
+                        <div className="text-xs text-white/50">
+                          Studio: {anime.studio}
+                        </div>
+                      )}
+
+                      {/* Features/Episodes */}
+                      {anime.episodes && (
+                        <div className="flex flex-wrap gap-1">
+                          <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                            {anime.episodes} Episoden
+                          </Badge>
+                          <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                            {anime.type}
+                          </Badge>
+                        </div>
+                      )}
+
+                      {/* Wishlist progress */}
+                      <div className="w-full bg-white/10 rounded-full h-1.5">
+                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300" style={{width: '0%'}}></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))}
           </div>
         ) : (

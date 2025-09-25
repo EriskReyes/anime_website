@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from "react";
-import { Article } from "@/api/entities";
+import { AnimeModel } from "../models/AnimeModel.js";
+import { GameModel } from "../models/GameModel.js";
 import HeroSection from "../components/home/HeroSection";
 import TrendingSection from "../components/home/TrendingSection";
 import ArticleCard from "../components/home/ArticleCard";
@@ -18,15 +19,61 @@ export default function Home() {
     loadArticles();
   }, []);
 
-  const loadArticles = async () => {
+  const loadArticles = () => {
     setIsLoading(true);
-    const data = await Article.list("-created_date");
-    setArticles(data);
-    
-    // Vorgestellten Artikel holen
-    const featured = data.find(article => article.featured) || data[0];
-    setFeaturedArticle(featured);
-    
+    try {
+      const animes = AnimeModel.findAll();
+      const games = GameModel.findAll();
+
+      // Convert animes to article format
+      const animeArticles = animes.map(anime => ({
+        id: anime.id,
+        title: anime.title,
+        description: anime.description,
+        type: 'anime',
+        rating: anime.rating,
+        image_url: anime.images?.poster || null,
+        preview_url: anime.trailer || null,
+        manufacturer: anime.studio,
+        platform: anime.platform || [],
+        genre: anime.genres || [],
+        status: anime.status,
+        createdAt: anime.createdAt,
+        featured: anime.featured || false
+      }));
+
+      // Convert games to article format
+      const gameArticles = games.map(game => ({
+        id: game.id,
+        title: game.title,
+        description: game.description,
+        type: 'game',
+        rating: game.rating,
+        image_url: game.images?.poster || null,
+        preview_url: game.trailer || null,
+        manufacturer: game.developer,
+        platform: game.platform || [],
+        genre: game.genres || [],
+        status: game.status,
+        createdAt: game.createdAt,
+        featured: game.featured || false
+      }));
+
+      // Combine and sort by creation date
+      const allArticles = [...animeArticles, ...gameArticles].sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+      );
+
+      setArticles(allArticles);
+
+      // Find featured article or use the first one
+      const featured = allArticles.find(article => article.featured) || allArticles[0];
+      setFeaturedArticle(featured);
+    } catch (error) {
+      console.error('Error loading content:', error);
+      setArticles([]);
+      setFeaturedArticle(null);
+    }
     setIsLoading(false);
   };
 

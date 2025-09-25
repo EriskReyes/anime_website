@@ -3,7 +3,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Home, Gamepad2, Play, MessageSquare, TrendingUp, Search } from "lucide-react";
+import { Home, Gamepad2, Play, MessageSquare, TrendingUp, Search, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -19,7 +19,7 @@ const navigationItems = [
     icon: Play,
   },
   {
-    title: "Spiele", 
+    title: "Spiele",
     url: createPageUrl("Games"),
     icon: Gamepad2,
   },
@@ -78,8 +78,8 @@ export default function Layout({ children, currentPageName }) {
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2">
                 <Search className="w-4 h-4 text-white/60" />
-                <Input 
-                  placeholder="Suche nach Anime, Spielen..." 
+                <Input
+                  placeholder="Suche nach Anime, Spielen..."
                   className="bg-transparent border-none text-white placeholder-white/60 focus-visible:ring-0"
                 />
               </div>
