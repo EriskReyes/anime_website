@@ -1,24 +1,30 @@
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { AnimeModel } from "../models/AnimeModel.js";
+import { useDatabase } from "../hooks/useDatabase.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TrendingUp, Star, Flame, Award, Play, Calendar, Clock } from "lucide-react";
+import { TrendingUp, Star, Flame, Award, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Trending() {
   const [animes, setAnimes] = useState([]);
+  const { isLoading: dbLoading, error: dbError } = useDatabase();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    loadAnimes();
-  }, []);
+    if (!dbLoading && !dbError) {
+      loadAnimes();
+    }
+  }, [dbLoading, dbError]);
 
   const loadAnimes = () => {
     setIsLoading(true);
     try {
       const data = AnimeModel.findAll();
+      console.log('Loaded animes with images:', data.map(anime => ({ title: anime.title, hasImage: !!anime.images?.poster })));
       setAnimes(data);
     } catch (error) {
       console.error('Error loading animes:', error);
@@ -28,17 +34,35 @@ export default function Trending() {
   };
 
   // Trend-Animes abrufen (hoch bewertet)
-  const trendingAnimes = AnimeModel.getTrending(12);
-  const topRatedAnimes = AnimeModel.getTopRated(12);
+  const trendingAnimes = animes.length > 0 ? AnimeModel.getTrending(12) : [];
+  const topRatedAnimes = animes.length > 0 ? AnimeModel.getTopRated(12) : [];
   const newReleases = animes.filter(anime => anime.status === 'completed').slice(0, 12);
   const upcoming = animes.filter(anime => anime.status === 'upcoming').slice(0, 12);
 
-  if (isLoading) {
+  if (dbLoading || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-white/60">Lade trendende Inhalte...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (dbError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-red-400 mb-2">Fehler beim Laden der Daten</h2>
+          <p className="text-red-300 mb-4">{dbError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            Seite neu laden
+          </button>
         </div>
       </div>
     );
@@ -151,91 +175,60 @@ export default function Trending() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <Card className="group bg-white/5 backdrop-blur-lg border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                      <div className="relative overflow-hidden rounded-t-lg">
-                        <div className="aspect-[3/4] overflow-hidden">
-                          <img
-                            src={anime.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=600&fit=crop"}
-                            alt={anime.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                            loading="lazy"
-                          />
+                    <Card className="group bg-gradient-to-br from-purple-600 to-purple-800 border-purple-500/20 hover:from-purple-500 hover:to-purple-700 transition-all duration-300 hover:scale-105 hover:shadow-xl shadow-purple-500/25 rounded-xl">
+                      <CardContent className="p-6">
+                        {/* Título del anime */}
+                        <h3 className="text-white text-2xl font-bold mb-2 line-clamp-1">
+                          {anime.title}
+                        </h3>
+
+                        {/* Studio */}
+                        <p className="text-gray-300 text-sm mb-4">
+                          von {anime.studio}
+                        </p>
+
+                        {/* Descripción */}
+                        <p className="text-white text-sm leading-relaxed mb-4 line-clamp-2">
+                          {anime.synopsis}
+                        </p>
+
+                        {/* Rating con estrellas */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < Math.floor(anime.rating || 0)
+                                    ? 'text-yellow-400 fill-current'
+                                    : 'text-gray-400'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-white font-semibold text-sm">
+                            {(anime.rating || 0).toFixed(1)}
+                          </span>
                         </div>
-                        <div className="absolute top-2 left-2 flex gap-1">
-                          <Badge variant="secondary" className="bg-black/60 text-white text-xs">
+
+                        {/* Tags/Géneros */}
+                        <div className="flex flex-wrap gap-2 mb-6">
+                          <Badge className="bg-purple-800 text-white text-xs px-3 py-1 rounded border-0">
                             {anime.type || 'Anime'}
                           </Badge>
-                          {anime.status === 'ongoing' && (
-                            <Badge variant="default" className="bg-green-500 text-white text-xs">
-                              Laufend
+                          {anime.genres?.slice(0, 2).map((genre) => (
+                            <Badge key={genre} className="bg-purple-800 text-white text-xs px-3 py-1 rounded border-0">
+                              {genre}
                             </Badge>
-                          )}
+                          ))}
                         </div>
-                        <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/60 rounded px-2 py-1">
-                          <Star className="w-3 h-3 text-yellow-400" />
-                          <span className="text-white text-xs">{anime.rating || 'N/A'}</span>
-                        </div>
-                      </div>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-white text-lg leading-tight line-clamp-2">
-                          {anime.title}
-                        </CardTitle>
-                        <CardDescription className="text-white/60 text-sm line-clamp-2">
-                          {anime.synopsis}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="space-y-3">
-                          {/* Genres */}
-                          <div className="flex flex-wrap gap-1">
-                            {anime.genres?.slice(0, 3).map((genre) => (
-                              <Badge key={genre} variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-500/30">
-                                {genre}
-                              </Badge>
-                            ))}
-                            {anime.genres?.length > 3 && (
-                              <Badge variant="outline" className="text-xs bg-gray-500/20 text-gray-300 border-gray-500/30">
-                                +{anime.genres.length - 3}
-                              </Badge>
-                            )}
-                          </div>
 
-                          {/* Info */}
-                          <div className="flex items-center justify-between text-xs text-white/60">
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3" />
-                              <span>{anime.rating || 0}/10</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>{anime.releaseDate ? new Date(anime.releaseDate).getFullYear() : 'TBA'}</span>
-                            </div>
-                          </div>
-
-                          {/* Studio */}
-                          {anime.studio && (
-                            <div className="text-xs text-white/50">
-                              Studio: {anime.studio}
-                            </div>
-                          )}
-
-                          {/* Episodes */}
-                          {anime.episodes && (
-                            <div className="flex flex-wrap gap-1">
-                              <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
-                                {anime.episodes} Episoden
-                              </Badge>
-                              <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
-                                {anime.type}
-                              </Badge>
-                            </div>
-                          )}
-
-                          {/* Wishlist progress */}
-                          <div className="w-full bg-white/10 rounded-full h-1.5">
-                            <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300" style={{width: '0%'}}></div>
-                          </div>
-                        </div>
+                        {/* Botón Details */}
+                        <Button
+                          className="w-full bg-purple-900 hover:bg-purple-950 text-white border-0 rounded-lg py-3 font-medium transition-colors duration-200"
+                        >
+                          Details ansehen
+                        </Button>
                       </CardContent>
                     </Card>
                   </motion.div>
@@ -265,10 +258,13 @@ export default function Trending() {
                       <div className="relative overflow-hidden rounded-t-lg">
                         <div className="aspect-[3/4] overflow-hidden">
                           <img
-                            src={anime.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=600&fit=crop"}
-                            alt={anime.title}
+                            src={anime.images?.poster || `https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=400&h=600&fit=crop&auto=format&q=80`}
+                            alt={anime.title || 'Anime Poster'}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            onError={(e) => {
+                              e.target.src = `https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop&auto=format&q=80`;
+                            }}
                           />
                         </div>
                         <div className="absolute top-2 left-2 flex gap-1">
@@ -371,10 +367,13 @@ export default function Trending() {
                       <div className="relative overflow-hidden rounded-t-lg">
                         <div className="aspect-[3/4] overflow-hidden">
                           <img
-                            src={anime.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=600&fit=crop"}
-                            alt={anime.title}
+                            src={anime.images?.poster || `https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=400&h=600&fit=crop&auto=format&q=80`}
+                            alt={anime.title || 'Anime Poster'}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            onError={(e) => {
+                              e.target.src = `https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop&auto=format&q=80`;
+                            }}
                           />
                         </div>
                         <div className="absolute top-2 left-2 flex gap-1">
@@ -477,10 +476,13 @@ export default function Trending() {
                       <div className="relative overflow-hidden rounded-t-lg">
                         <div className="aspect-[3/4] overflow-hidden">
                           <img
-                            src={anime.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=600&fit=crop"}
-                            alt={anime.title}
+                            src={anime.images?.poster || `https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=400&h=600&fit=crop&auto=format&q=80`}
+                            alt={anime.title || 'Anime Poster'}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
+                            onError={(e) => {
+                              e.target.src = `https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=600&fit=crop&auto=format&q=80`;
+                            }}
                           />
                         </div>
                         <div className="absolute top-2 left-2 flex gap-1">

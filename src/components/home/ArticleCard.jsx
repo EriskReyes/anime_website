@@ -1,5 +1,4 @@
 
-import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { motion } from "framer-motion";
 
 export default function ArticleCard({ article, index }) {
   const isAnime = article.type === 'anime';
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -26,12 +25,12 @@ export default function ArticleCard({ article, index }) {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          
+
           {/* Typ-Badge */}
-          <Badge 
+          <Badge
             className={`absolute top-3 left-3 ${
-              isAnime 
-                ? 'bg-pink-500/90 text-white' 
+              isAnime
+                ? 'bg-pink-500/90 text-white'
                 : 'bg-blue-500/90 text-white'
             } border-0 font-semibold`}
           >
@@ -62,7 +61,7 @@ export default function ArticleCard({ article, index }) {
           <h3 className="font-bold text-white text-lg line-clamp-2 group-hover:text-purple-300 transition-colors">
             {article.title}
           </h3>
-          
+
           {article.manufacturer && (
             <p className="text-white/60 text-sm font-medium">
               von {article.manufacturer}
@@ -124,8 +123,8 @@ export default function ArticleCard({ article, index }) {
               </div>
             )}
 
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 text-white border-white/20 mt-2"
             >
               <ExternalLink className="w-4 h-4 mr-2" />

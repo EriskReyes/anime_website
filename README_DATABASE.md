@@ -115,7 +115,7 @@ const allAnimes = AnimeModel.findAll()
 // Nach ID suchen
 const anime = AnimeModel.findById("anime_id")
 
-// Nach Genre suchen
+ Nach Genre suchen
 const actionAnimes = AnimeModel.findByGenre("Action")
 
 // Top Trending

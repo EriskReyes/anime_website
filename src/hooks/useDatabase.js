@@ -17,7 +17,7 @@ export const useDatabase = () => {
 
             // Check database version to force updates
             const currentVersion = localStorage.getItem('anime_website_db_version');
-            const expectedVersion = '1.4.0'; // Perfect match to Games design - ALL elements identical
+            const expectedVersion = '2.1.0'; // Anime and Games pages now match Startseite design exactly
 
             // Check if database exists and has data
             const animes = db.findAll('animes');

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Play, Search, Filter, Star, Calendar, Clock, Eye } from "lucide-react";
+import { Play, Search, Filter, Star, Calendar, Clock, Eye, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Anime() {
@@ -233,92 +233,110 @@ export default function Anime() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="group bg-white/5 backdrop-blur-lg border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    <div className="aspect-[3/4] overflow-hidden">
-                      <img
-                        src={anime.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=600&fit=crop"}
-                        alt={anime.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      <Badge variant="secondary" className="bg-black/60 text-white text-xs">
-                        {anime.type || 'Anime'}
+                <Card className="bg-white/5 backdrop-blur-lg border-white/10 hover:bg-white/10 transition-all duration-300 overflow-hidden group h-full flex flex-col">
+                  {/* Bild */}
+                  <div className="relative aspect-video overflow-hidden">
+                    <img
+                      src={anime.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=225&fit=crop"}
+                      alt={anime.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+                    {/* Typ-Badge */}
+                    <Badge className="absolute top-3 left-3 bg-pink-500/90 text-white border-0 font-semibold">
+                      🎬 ANIME
+                    </Badge>
+
+                    {/* Status-Badge */}
+                    {anime.status === 'upcoming' && (
+                      <Badge className="absolute top-3 right-3 bg-orange-500/90 text-white border-0">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        Demnächst
                       </Badge>
-                      {anime.status === 'ongoing' && (
-                        <Badge variant="default" className="bg-green-500 text-white text-xs">
-                          Laufend
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/60 rounded px-2 py-1">
-                      <Star className="w-3 h-3 text-yellow-400" />
-                      <span className="text-white text-xs">{anime.rating || 'N/A'}</span>
-                    </div>
+                    )}
+
+                    {/* Play-Button-Overlay */}
+                    {anime.trailer && (
+                      <Button
+                        size="icon"
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                        variant="ghost"
+                      >
+                        <Play className="w-6 h-6 text-white" />
+                      </Button>
+                    )}
                   </div>
 
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-white text-lg leading-tight line-clamp-2">
+                    <h3 className="font-bold text-white text-lg line-clamp-2 group-hover:text-purple-300 transition-colors">
                       {anime.title}
-                    </CardTitle>
-                    <CardDescription className="text-white/60 text-sm line-clamp-2">
-                      {anime.synopsis}
-                    </CardDescription>
+                    </h3>
+
+                    {anime.studio && (
+                      <p className="text-white/60 text-sm font-medium">
+                        von {anime.studio}
+                      </p>
+                    )}
                   </CardHeader>
 
-                  <CardContent className="pt-0">
+                  <CardContent className="flex-1 flex flex-col justify-between">
+                    <p className="text-white/80 text-sm leading-relaxed line-clamp-3 mb-4">
+                      {anime.synopsis}
+                    </p>
+
                     <div className="space-y-3">
-                      {/* Genres */}
-                      <div className="flex flex-wrap gap-1">
-                        {anime.genres?.slice(0, 3).map((genre) => (
-                          <Badge key={genre} variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-500/30">
-                            {genre}
-                          </Badge>
-                        ))}
-                        {anime.genres?.length > 3 && (
-                          <Badge variant="outline" className="text-xs bg-gray-500/20 text-gray-300 border-gray-500/30">
-                            +{anime.genres.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex items-center justify-between text-xs text-white/60">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3" />
-                          <span>{anime.rating || 0}/10</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{anime.releaseDate ? new Date(anime.releaseDate).getFullYear() : 'TBA'}</span>
-                        </div>
-                      </div>
-
-                      {/* Developer/Studio */}
-                      {anime.studio && (
-                        <div className="text-xs text-white/50">
-                          Studio: {anime.studio}
+                      {/* Bewertung */}
+                      {anime.rating && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < Math.floor(anime.rating)
+                                    ? 'text-yellow-400 fill-current'
+                                    : 'text-gray-600'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-white font-semibold text-sm">
+                            {anime.rating.toFixed(1)}
+                          </span>
                         </div>
                       )}
 
-                      {/* Features/Episodes */}
+                      {/* Episodes/Type */}
                       {anime.episodes && (
                         <div className="flex flex-wrap gap-1">
-                          <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                          <Badge variant="outline" className="bg-white/5 border-white/20 text-white/80 text-xs">
                             {anime.episodes} Episoden
                           </Badge>
-                          <Badge variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
+                          <Badge variant="outline" className="bg-white/5 border-white/20 text-white/80 text-xs">
                             {anime.type}
                           </Badge>
                         </div>
                       )}
 
-                      {/* Wishlist progress */}
-                      <div className="w-full bg-white/10 rounded-full h-1.5">
-                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300" style={{width: '0%'}}></div>
-                      </div>
+                      {/* Genres */}
+                      {anime.genres && anime.genres.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {anime.genres.slice(0, 2).map((genre) => (
+                            <Badge key={genre} variant="secondary" className="bg-purple-500/20 text-purple-300 border-0 text-xs">
+                              {genre}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+
+                      <Button
+                        variant="ghost"
+                        className="w-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 text-white border-white/20 mt-2"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Details ansehen
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

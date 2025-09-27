@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Gamepad2, Search, Filter, Star, Calendar, Euro } from "lucide-react";
+import { Gamepad2, Search, Filter, Star, Calendar, Euro, ExternalLink, Play } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Games() {
@@ -236,91 +236,114 @@ export default function Games() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="group bg-white/5 backdrop-blur-lg border-white/10 hover:bg-white/10 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    <div className="aspect-[3/4] overflow-hidden">
-                      <img
-                        src={game.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=600&fit=crop"}
-                        alt={game.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      <Badge variant="secondary" className="bg-black/60 text-white text-xs">
-                        {game.platform?.[0] || 'PC'}
+                <Card className="bg-white/5 backdrop-blur-lg border-white/10 hover:bg-white/10 transition-all duration-300 overflow-hidden group h-full flex flex-col">
+                  {/* Bild */}
+                  <div className="relative aspect-video overflow-hidden">
+                    <img
+                      src={game.images?.poster || "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=400&h=225&fit=crop"}
+                      alt={game.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+                    {/* Typ-Badge */}
+                    <Badge className="absolute top-3 left-3 bg-blue-500/90 text-white border-0 font-semibold">
+                      🎮 SPIEL
+                    </Badge>
+
+                    {/* Status-Badge */}
+                    {game.status === 'upcoming' && (
+                      <Badge className="absolute top-3 right-3 bg-orange-500/90 text-white border-0">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        Demnächst
                       </Badge>
-                      {game.status === 'released' && (
-                        <Badge variant="default" className="bg-green-500 text-white text-xs">
-                          Verfügbar
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="absolute top-2 right-2 flex items-center gap-1 bg-black/60 rounded px-2 py-1">
-                      <Star className="w-3 h-3 text-yellow-400" />
-                      <span className="text-white text-xs">{game.rating || 'N/A'}</span>
-                    </div>
+                    )}
+
+                    {/* Play-Button-Overlay */}
+                    {game.trailer && (
+                      <Button
+                        size="icon"
+                        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/20 backdrop-blur-sm hover:bg-white/30 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                        variant="ghost"
+                      >
+                        <Play className="w-6 h-6 text-white" />
+                      </Button>
+                    )}
                   </div>
 
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-white text-lg leading-tight line-clamp-2">
+                    <h3 className="font-bold text-white text-lg line-clamp-2 group-hover:text-purple-300 transition-colors">
                       {game.title}
-                    </CardTitle>
-                    <CardDescription className="text-white/60 text-sm line-clamp-2">
-                      {game.description}
-                    </CardDescription>
+                    </h3>
+
+                    {game.developer && (
+                      <p className="text-white/60 text-sm font-medium">
+                        von {game.developer}
+                      </p>
+                    )}
                   </CardHeader>
 
-                  <CardContent className="pt-0">
+                  <CardContent className="flex-1 flex flex-col justify-between">
+                    <p className="text-white/80 text-sm leading-relaxed line-clamp-3 mb-4">
+                      {game.description}
+                    </p>
+
                     <div className="space-y-3">
-                      {/* Genres */}
-                      <div className="flex flex-wrap gap-1">
-                        {game.genres?.slice(0, 3).map((genre) => (
-                          <Badge key={genre} variant="outline" className="text-xs bg-blue-500/20 text-blue-300 border-blue-500/30">
-                            {genre}
-                          </Badge>
-                        ))}
-                        {game.genres?.length > 3 && (
-                          <Badge variant="outline" className="text-xs bg-gray-500/20 text-gray-300 border-gray-500/30">
-                            +{game.genres.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex items-center justify-between text-xs text-white/60">
-                        <div className="flex items-center gap-1">
-                          <Euro className="w-3 h-3" />
-                          <span>{game.price ? `${game.price}€` : 'Free'}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{game.releaseDate ? new Date(game.releaseDate).getFullYear() : 'TBA'}</span>
-                        </div>
-                      </div>
-
-                      {/* Developer */}
-                      {game.developer && (
-                        <div className="text-xs text-white/50">
-                          Entwickler: {game.developer}
+                      {/* Bewertung */}
+                      {game.rating && (
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < Math.floor(game.rating)
+                                    ? 'text-yellow-400 fill-current'
+                                    : 'text-gray-600'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-white font-semibold text-sm">
+                            {game.rating.toFixed(1)}
+                          </span>
                         </div>
                       )}
 
-                      {/* Features */}
-                      {game.features && game.features.length > 0 && (
+                      {/* Platforms/Price */}
+                      {game.platform && game.platform.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {game.features.slice(0, 2).map((feature) => (
-                            <Badge key={feature} variant="outline" className="text-xs bg-green-500/20 text-green-300 border-green-500/30">
-                              {feature}
+                          {game.platform.slice(0, 3).map((platform) => (
+                            <Badge key={platform} variant="outline" className="bg-white/5 border-white/20 text-white/80 text-xs">
+                              {platform}
+                            </Badge>
+                          ))}
+                          {game.platform.length > 3 && (
+                            <Badge variant="outline" className="bg-white/5 border-white/20 text-white/80 text-xs">
+                              +{game.platform.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Genres */}
+                      {game.genres && game.genres.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {game.genres.slice(0, 2).map((genre) => (
+                            <Badge key={genre} variant="secondary" className="bg-purple-500/20 text-purple-300 border-0 text-xs">
+                              {genre}
                             </Badge>
                           ))}
                         </div>
                       )}
 
-                      {/* Wishlist progress */}
-                      <div className="w-full bg-white/10 rounded-full h-1.5">
-                        <div className="bg-gradient-to-r from-blue-500 to-purple-500 h-1.5 rounded-full transition-all duration-300" style={{width: '0%'}}></div>
-                      </div>
+                      <Button
+                        variant="ghost"
+                        className="w-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 hover:from-purple-600/30 hover:to-pink-600/30 text-white border-white/20 mt-2"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Details ansehen
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
