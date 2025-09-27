@@ -119,7 +119,12 @@ class IndexedDBManager {
         const transaction = this.db.transaction([storeName], 'readwrite');
         const store = transaction.objectStore(storeName);
 
-        r
+        return new Promise((resolve, reject) => {
+            const request = store.getAll();
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
 
     async search(storeName, indexName, value) {
         const transaction = this.db.transaction([storeName], 'readonly');

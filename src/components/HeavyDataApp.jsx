@@ -1,5 +1,5 @@
 // src/components/HeavyDataApp.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useIndexedDB } from '../hooks/useIndexedDB';
 
 const HeavyDataApp = () => {
@@ -9,6 +9,7 @@ const HeavyDataApp = () => {
         isReady,
         create,
         getAll,
+        getById,
         update,
         delete: deleteRecord,
         search,
@@ -412,4 +413,12 @@ const HeavyDataApp = () => {
                             <div className="text-purple-100">Archivos</div>
                         </div>
                         <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 rounded-xl text-white">
-                            <div className="text-3xl font-bold">
+                            <div className="text-3xl font-bold">{stats.size || 0}</div>
+                            <div className="text-orange-100">Tamaño</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+        </div>
+    );
+};

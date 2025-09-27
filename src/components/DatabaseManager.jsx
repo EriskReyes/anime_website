@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,9 +12,6 @@ import { Label } from '@/components/ui/label';
 import db from '../database/LocalDatabase.js';
 import { seedDatabase, clearDatabase } from '../database/SeedData.js';
 import { AnimeModel } from '../models/AnimeModel.js';
-import { UserModel } from '../models/UserModel.js';
-import { ReviewModel } from '../models/ReviewModel.js';
-import { ForumPostModel } from '../models/ForumPostModel.js';
 
 const DatabaseManager = () => {
     const [stats, setStats] = useState({});

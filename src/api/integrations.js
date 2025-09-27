@@ -92,8 +92,7 @@ export async function UploadFile(options = {}) {
         bucket,
         key,
         contentType,
-        apiKey,
-        service = 's3' // or 'gcs', 'azure', etc.
+        apiKey
     } = options;
 
     try {

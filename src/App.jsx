@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { useDatabase } from "./hooks/useDatabase.js"
 
 function App() {
-  const { isLoading, error, isInitialized } = useDatabase();
+  const { isLoading, error } = useDatabase();
 
   if (isLoading) {
     return (
